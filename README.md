@@ -20,6 +20,9 @@ Create, Read, Update and Destroy is what all databases will mainly focus on when
 1. `psql -U postgres` # Connect to postgres
 2. `create database 'name_of_db';` # Create database
 3. `\c name_of_db` # Change into database
-4. `create user 'main_use'r with password '123qwe';` # Create user
-5. `grant all privileges on database 'name_of_db' to 'main_use'r;` # Assign user all privileges on database
-6. `pip3 install psycopg2 flask-sqlalchemy` # Packages to ORM flask to postgresql
+4. `create user 'main_user' with password '123qwe';` # Create user
+5. `grant all privileges on database 'name_of_db' to 'main_user';` # Assign user all privileges on database
+
+### Install packages to work with postgress in python
+
+1. `pip3 install psycopg2 flask-sqlalchemy` # Packages to ORM flask to postgresql
