@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, date
 from flask import Flask, request, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -37,6 +37,9 @@ class CardSchema(ma.Schema):
     class Meta:
         fields = ('id', 'title', 'description', 'date', 'status', 'priority')
 
+card_schema = CardSchema()
+cards_schema = CardSchema(many=True)
+
 class UserSchema(ma.Schema):
     class Meta:
         fields = ('id', 'email', 'password', 'password', 'admin')
@@ -57,7 +60,6 @@ def drop_db():
 
 @app.cli.command('seed')
 def seed_db():
-    from datetime import date
     card = Card(
         title = 'Start project',
         description = 'Step 1 - Create a db',
@@ -90,6 +92,21 @@ def cards():
     cards = Card.query.all()
     result = CardSchema(many=True).dump(cards)
     return result
+
+@app.route('/cards', methods=['POST'])
+@jwt_required()
+def new_card():
+    card_fields = CardSchema().load(request.json)
+    card = Card(
+        title = card_fields['title'],
+        description = card_fields['description'],
+        status = card_fields['status'],
+        priority = card_fields['priority'],
+        date = date.today()
+    )
+    db.session.add(card)
+    db.session.commit()
+    return jsonify(card_schema.dump(card))
 
 @app.route('/auth/register', methods=['POST'])
 def auth_register():
