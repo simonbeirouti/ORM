@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow.validate import Length
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
 app = Flask(__name__)
 
@@ -93,6 +93,13 @@ def cards():
     result = CardSchema(many=True).dump(cards)
     return result
 
+@app.route('/cards/<int:id>', methods=['GET'])
+def get_cards(id):
+    card = Card.query.get(id)
+    if not card:
+        return abort(400, description='Card doesn\'t exist.')
+    return jsonify(card_schema.dump(card))
+
 @app.route('/cards', methods=['POST'])
 @jwt_required()
 def new_card():
@@ -105,6 +112,42 @@ def new_card():
         date = date.today()
     )
     db.session.add(card)
+    db.session.commit()
+    return jsonify(card_schema.dump(card))
+
+# @app.route('/cards/<int:id>', methods=['PUT'])
+# @jwt_required()
+# def update_card(id):
+#     user_id = get_jwt_identity()
+#     user = User.query.get(user_id)
+#     if not user.admin:
+#         return abort(400, description='You don\'t have the permission to do this.')
+#     card_fields = CardSchema().load(request.json)
+#     card = Card(
+#         title = card_fields['title'],
+#         description = card_fields['description'],
+#         status = card_fields['status'],
+#         priority = card_fields['priority'],
+#         date = date.today()
+#     )
+#     card = Card.query.get(id)
+#     if not card:
+#         return abort(400, description='Card doesn\'t exist.')
+#     db.session.merge(card)
+#     db.session.commit()
+#     return jsonify(card_schema.dump(card))
+
+@app.route('/cards/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_card(id):
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    if not user.admin:
+        return abort(400, description='You don\'t have the permission to do this.')
+    card = Card.query.get(id)
+    if not card:
+        return abort(400, description='Card doesn\'t exist.')
+    db.session.delete(card)
     db.session.commit()
     return jsonify(card_schema.dump(card))
 
