@@ -1,4 +1,5 @@
 from datetime import timedelta, date
+import random
 from flask import Flask, request, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -60,13 +61,17 @@ def drop_db():
 
 @app.cli.command('seed')
 def seed_db():
-    card = Card(
-        title = 'Start project',
-        description = 'Step 1 - Create a db',
-        date = date.today(),
-        status = 'To Do',
-        priority = 'High'
-    )
+    for j in range(30):
+        for i in range(3):
+            card = Card(
+                title='Run ' + str(j), 
+                description='Description ' + str(i),
+                date=date.today(), 
+                status='In Progress', 
+                priority=str(i)
+            )
+            db.session.add(card)
+
     admin = User(
         email = 'hi@email.com',
         password = bcrypt.generate_password_hash('123qwe123').decode('utf-8'),
@@ -76,7 +81,6 @@ def seed_db():
         email = 'bye@email.com',
         password = bcrypt.generate_password_hash('123qwe123').decode('utf-8'),
     )
-    db.session.add(card)
     db.session.add(admin)
     db.session.add(user1)
     db.session.commit()
@@ -100,7 +104,7 @@ def get_cards(id):
         return abort(400, description='Card doesn\'t exist.')
     return jsonify(card_schema.dump(card))
 
-@app.route('/cards', methods=['POST'])
+@app.route('/cards/new', methods=['POST'])
 @jwt_required()
 def new_card():
     card_fields = CardSchema().load(request.json)
@@ -143,10 +147,10 @@ def delete_card(id):
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     if not user.admin:
-        return abort(400, description='You don\'t have the permission to do this.')
+        return {"error": "No user by that id"}
     card = Card.query.get(id)
     if not card:
-        return abort(400, description='Card doesn\'t exist.')
+        return {"error": "No card by that id"}
     db.session.delete(card)
     db.session.commit()
     return jsonify(card_schema.dump(card))
